@@ -31,6 +31,8 @@ section .data
     ; estas son cosas de prueba
 	letraZ               db "Z", 0
 	letraA               db "A", 0
+    valor252 db 252
+    valor6  db 6
 	indiceTablaConversion db 0
 
 section .bss
@@ -39,24 +41,98 @@ section .bss
 section .text
 
 main:
-    ; esto es de prueba tambien, para ir viendo viste de a poquito
-    ; (chatgpt tiro), que podemos usar al registro r9 como un puntero a la cadena secuenciaImprimibleA
-    ; la ventaja de esto que le podemos incrementar 1 a este puntero (el registro r9) y avanzar a la posicion
-    ; siguiente, en cambio directamente con secuenciaImprimibleA no es posible hacer eso
-    mov r9, 0 ; primero le ponemos de valor 0, si no tira error
-    add r9, secuenciaImprimibleA ; le pasamos (en realidad le sumamos) al registro r9 la direccion de
-                                 ; memoria de secuenciaImprimibleA
+    ; Seteamos en 0 los registros rax, y rbx
+    xor rax, rax
+    xor rbx, rbx
 
-    mov r8w, [letraZ] ; muevo la letraZ de un byte a r8w, que es de un byte tambien
-    mov [r9], r8w     ; muevo al puntero r9, el valor de r8w que es la letraZ
+    mov al, [valor252]
+    and al, 0b00111111
 
-    add r9, 1         ; le sumamos 1 al puntero r9, osea avanzamos a la posicion siguiente
-    mov r8w, [letraA]
-    mov [r9], r8w
+    mov bl, [valor252]
+    and bl, 0b11000000
 
-    add r9, 1
-    mov r8w, [letraZ]
-    mov [r9], r8w
+    mov cl, [valor6]         ; Cargar 6 en CL (usaremos esto para dividir)
+    div cl            ; Dividimos BL por 64 para colocar los bits en las posiciones correctas
+
+    or al, bl
+
+    ; se aproxima por aca -> https://chatgpt.com/share/673a84ca-c200-8004-a88e-717933dc6669
+    ; https://chatgpt.com/share/673a84ca-c200-8004-a88e-717933dc6669
+
+
+    ; 1er digito
+    ; 11110101 convertir a 00111101
+    ; primero conseguimos los primeros 6 caracteres
+    ; 11110101 and 11111100
+    ; 11110100
+
+
+    ; 11110000
+    ; 00000100
+
+
+    ; 11010100 and 10000000
+    ; 11111111 - 10000000
+    ; 01111111
+    ; 10000000 -> 00000001
+
+    ; 11010100 and 10000000
+    ; 11111111 + 10000000
+    ; 01111111
+    ; 10000000
+
+
+
+    ; 11010100 and 10000000
+    ; 11111111 - 01000000
+    ; 11111111
+    ; 00000001
+
+    ; r9x
+    ; 00000000 + 00000001 = 00000001
+    ; 00000001 + 00000010 = 00000011
+    ; 00000011 + 00000000 = 00000011
+    ; 00000011 + 00001000 = 00001011
+    
+    ; 00111101 
+    ; el resultado lo desplazamos dos bits a la derecha
+
+
+
+
+
+
+
+
+
+
+
+    ; 2do digito
+    ; 11110101 -> 00000001
+    
+    ; 3er digito
+
+    ; 4to digito
+    ; 11110101 convertir a 00111101
+
+
+
+
+
+;     mov r9, 0 ; vaciamos r9
+;     add r9, secuenciaImprimibleA ; le sumamos al registro r9 la direccion de memoria de secuenciaImprimibleA
+
+;     xor rcx, rcx
+;     mov rcx, 0 ; vaciamos rcx
+;     mov cl, [largoSecuenciaA] ; no movemos a rcx, porque rcx es de 8 bytes, y largoSecuenciaA es de 
+
+; iteracion_secuencia:
+;     mov r8w, [letraA]
+;     mov [r9], r8w
+;     add r9, 1
+
+;     loop iteracion_secuencia
+
 
     m_puts secuenciaImprimibleA ; imprime "ZAZ"
 
