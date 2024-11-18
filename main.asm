@@ -21,99 +21,121 @@ extern puts
     add rsp, 8
 %endmacro
 
+    mov rsi, secuenciaBinariaA  ; Cargar la dirección de la secuencia en RSI
+    mov al, [rsi]               ; Cargar el primer byte de la secuencia en AL
+
 section .data
-	secuenciaBinariaA	db	0xC4, 0x94, 0x37, 0x95, 0x63, 0xA2, 0x1D, 0x3C
-						db	0x86, 0xFC, 0x22, 0xA9, 0x3D, 0x7C, 0xA4, 0x51
-						db	0x63, 0x7C, 0x29, 0x04, 0x93, 0xBB, 0x65, 0x18
-    TablaConversion		db	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-	largoSecuenciaA		db	0x18 ; 24 en decimal
+	secuenciaBinariaA	 db	0xC4, 0x94, 0x37, 0x95, 0x63, 0xA2, 0x1D, 0x3C
+						 db	0x86, 0xFC, 0x22, 0xA9, 0x3D, 0x7C, 0xA4, 0x51
+						 db	0x63, 0x7C, 0x29, 0x04, 0x93, 0xBB, 0x65, 0x18
+    TablaConversion		 db	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+	largoSecuenciaA		 db	0x18, 0 ; 24 en decimal
 
     ; estas son cosas de prueba
-	letraZ               db "Z", 0
-	letraA               db "A", 0
-    valor252 db 252
-    valor6  db 6
+    cantidadDeBytes       db  3
+	letraZ                db "Z"
+	letraA                db "A"
+    valor252              db 252
 	indiceTablaConversion db 0
 
 section .bss
-	secuenciaImprimibleA	resb	32
+	secuenciaImprimibleA	  resb	  24
+    
+    cantidadDeIteraciones     resb    1
+    primerByte                resb    1
+    segundoByte               resb    1
+    tercerByte                resb    1
+    primerCaracter            resb    1
+    segundoCaracter           resb    1
+    tercerCaracter            resb    1
+    cuartoCaracter            resb    1
+
 
 section .text
 
+; --------------------------------- MAIN  --------------------------------------
 main:
-    ; Seteamos en 0 los registros rax, y rbx
-    xor rax, rax
-    xor rbx, rbx
+    ; Conseguimos el numero de iteraciones 24 / 3 = 8
+    xor rax, rax ; Vaciamos rax
+    mov ax, [largoSecuenciaA] ; Movemos a ax (1 byte) el largo de secuencia de A
+    div byte[cantidadDeBytes] ; Dividimos ax por la cantidad de bytes = 3
+    mov [cantidadDeIteraciones], ax ; Movemos a cantidadDeIteraciones el valor de ax
+    xor rax, rax ; Vaciamos rax
 
-    mov al, [valor252]
-    and al, 0b00111111
 
-    mov bl, [valor252]
-    and bl, 0b11000000
 
-    mov cl, [valor6]         ; Cargar 6 en CL (usaremos esto para dividir)
-    div cl            ; Dividimos BL por 64 para colocar los bits en las posiciones correctas
+    ; r15 sera el 'puntero' que usaremos para iterar sobre secuenciaBinariaA
+    mov rcx, [cantidadDeIteraciones] ; Movemos la cantidad de iteraciones para iterar
+    xor r15, r15 ; vaciamos r15
+    add r15, secuenciaBinariaA ; le sumamos al registro r15 la direccion de memoria de secuenciaBinariaA
 
-    or al, bl
+inicio_de_codificacion:
+    sub rsp, 8
+    call obtener_3_bytes
+    add rsp, 8
 
-    ; se aproxima por aca -> https://chatgpt.com/share/673a84ca-c200-8004-a88e-717933dc6669
-    ; https://chatgpt.com/share/673a84ca-c200-8004-a88e-717933dc6669
+    sub rsp, 8
+    call obtener_4_digitos
+    add rsp, 8
 
+    ; sub rsp, 8
+    ; call codificar_4_caracteres
+    ; add rsp, 8
+
+    ; sub rsp, 8
+    ; call codificar_4_caracteres
+    ; add rsp, 8
+
+    loop inicio_de_codificacion
+
+    ret
+
+; --------------------------- RUTINAS INTERNAS ---------------------------------
+obtener_3_bytes:
+    xor r8, r8 ; vaciamos el registro r8
+    mov r8b, [r15] ; movemos el valor hexadecimal apuntado por el puntero r15
+                   ; que apunta a una posicion de secuenciaBinariaA
+    mov [primerByte], r8b
+
+    xor r8, r8
+    mov r8b, [r15 + 1]
+    mov [segundoByte], r8b
+    
+    xor r8, r8
+    mov r8b, [r15 + 2]
+    mov [tercerByte], r8b
+
+    add r15, 3
+
+    ret
+
+obtener_4_digitos:
+    
+    ret
 
     ; 1er digito
-    ; 11110101 convertir a 00111101
-    ; primero conseguimos los primeros 6 caracteres
-    ; 11110101 and 11111100
-    ; 11110100
-
-
-    ; 11110000
-    ; 00000100
-
-
-    ; 11010100 and 10000000
-    ; 11111111 - 10000000
-    ; 01111111
-    ; 10000000 -> 00000001
-
-    ; 11010100 and 10000000
-    ; 11111111 + 10000000
-    ; 01111111
-    ; 10000000
-
-
-
-    ; 11010100 and 10000000
-    ; 11111111 - 01000000
-    ; 11111111
-    ; 00000001
-
-    ; r9x
-    ; 00000000 + 00000001 = 00000001
-    ; 00000001 + 00000010 = 00000011
-    ; 00000011 + 00000000 = 00000011
-    ; 00000011 + 00001000 = 00001011
-    
-    ; 00111101 
-    ; el resultado lo desplazamos dos bits a la derecha
-
-
-
-
-
-
-
-
-
-
+    ; 6 bits de la izquierda del primer byte
+    ; mov r9b, [valor252]
+    ; and r9b, 0b11111100
+    ; shr r9b, 2 ; 11111100 -> 00111111
 
     ; 2do digito
-    ; 11110101 -> 00000001
-    
+    ; 2 bits de la derecha del primer byte
+    ; 4 bits de la izquierda del segundo byte
+
     ; 3er digito
+    ; 4 bits de la derecha del segundo byte
+    ; 2 bits de la izquierda del tercer byte
 
     ; 4to digito
-    ; 11110101 convertir a 00111101
+    ; 6 bits de la derecha del tercer byte
+
+
+
+
+
+
+
 
 
 
@@ -134,6 +156,4 @@ main:
 ;     loop iteracion_secuencia
 
 
-    m_puts secuenciaImprimibleA ; imprime "ZAZ"
-
-    ret
+;     m_puts secuenciaImprimibleA ; imprime "ZAZ"
