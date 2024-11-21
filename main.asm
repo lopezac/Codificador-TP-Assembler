@@ -7,6 +7,7 @@
 ;						   db	0x49, 0x55, 0xE5, 0x9F, 0x8E, 0xF2, 0x75, 0x5A
 ;						   db	0xD3, 0xC5, 0x53, 0x65, 0x68, 0x52, 0x78, 0x3F
 ; SecuenciaImprimibleCodificada	db	"czjn9zQsT5JJVeWfjvJ1WtPFU2VoUng/"
+;                                   "czjn9zQsT5JJVeWfjvJ1WtPFURx?Ung/"
 
 global main
 
@@ -42,7 +43,6 @@ section .data
 section .bss
 	secuenciaImprimibleA	  resb	  24
     
-    valorAnteriorDeRcx        resq    1
     cantidadDeIteraciones     resb    1
     primerByte                resb    1
     segundoByte               resb    1
@@ -82,14 +82,9 @@ inicio_de_codificacion:
     call obtener_4_digitos
     add rsp, 8
 
-    testrcx:
-    mov [valorAnteriorDeRcx], rcx
-
     sub rsp, 8
     call codificar_4_caracteres
     add rsp, 8
-
-    mov rcx, [valorAnteriorDeRcx]
 
     xor byte[primerByte], 0
     xor byte[segundoByte], 0
@@ -113,16 +108,18 @@ obtener_3_bytes:
     mov r8b, [r15] ; movemos el valor hexadecimal apuntado por el puntero r15
                    ; que apunta a una posicion de secuenciaBinariaA
     mov [primerByte], r8b
+    inc r15
 
     xor r8, r8
-    mov r8b, [r15 + 1]
+    mov r8b, [r15]
     mov [segundoByte], r8b
+    inc r15
     
     xor r8, r8
-    mov r8b, [r15 + 2]
+    mov r8b, [r15]
     mov [tercerByte], r8b
+    inc r15
 
-    add r15, 3
     xor r8, r8
 
     ret
@@ -187,54 +184,50 @@ codificar_un_caracter:
     xor r11, r11 ; vaciamos r11
     add r11, TablaConversion ; le sumamos al registro r11 la direccion de memoria de TablaConversion
 
-    iterar_hasta_caracter:
-        inc r11
-        loop iterar_hasta_caracter
-    testLuego:
     xor rax, rax
 
     ; r14 es el 'puntero' que usaremos para iterar sobre secuenciaImprimibleA
-    mov al, [r11]                 ; Movemos el valor actual del puntero r11, a al
-    add [r14], al
-    add r14, 1
+    mov al, [r11 + r13]                 ; Movemos el valor actual del puntero r11, a al
+    mov [r14], al
+    inc r14
 
     ret
 
 codificar_4_caracteres:
     ; ----------------------------- primer caracter ----------------------------
-    xor rcx, rcx
-    mov cl, [primerCaracter]
+    xor r13, r13
+    mov r13b, [primerCaracter]
 
     sub rsp, 8
     call codificar_un_caracter
     add rsp, 8
 
     ; ---------------------------- segundo caracter ----------------------------
-    xor rcx, rcx
-    mov cl, [segundoCaracter]
+    xor r13, r13
+    mov r13b, [segundoCaracter]
 
     sub rsp, 8
     call codificar_un_caracter
     add rsp, 8
 
     ; ----------------------------- tercer caracter ----------------------------
-    xor rcx, rcx
-    mov cl, [tercerCaracter]
+    xor r13, r13
+    mov r13b, [tercerCaracter]
 
     sub rsp, 8
     call codificar_un_caracter
     add rsp, 8
 
     ; ----------------------------- cuarto caracter ----------------------------
-    xor rcx, rcx
-    mov cl, [cuartoCaracter]
+    xor r13, r13
+    mov r13b, [cuartoCaracter]
 
     sub rsp, 8
     call codificar_un_caracter
     add rsp, 8
  
-
-    xor rcx, rcx
+    ; ------------------------- finalizacion codificar caracteres --------------
+    xor r13, r13
     xor rax, rax
 
     ret
