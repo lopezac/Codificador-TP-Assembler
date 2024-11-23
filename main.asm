@@ -27,11 +27,16 @@ extern puts
 
 section .data
 
-    secuenciaBinariaA db	0x73, 0x38, 0xE7, 0xF7, 0x34, 0x2C, 0x4F, 0x92
-						   db	0x49, 0x55, 0xE5, 0x9F, 0x8E, 0xF2, 0x75, 0x5A
-						   db	0xD3, 0xC5, 0x53, 0x65, 0x68, 0x52, 0x78, 0x3F
-    TablaConversion		 db	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-	largoSecuenciaA		 db	0x18, 0 ; 24 en decimal
+    secuenciaBinariaA    db	0x73, 0x38, 0xE7, 0xF7, 0x34, 0x2C, 0x4F, 0x92
+						 db	0x49, 0x55, 0xE5, 0x9F, 0x8E, 0xF2, 0x75, 0x5A
+						 db	0xD3, 0xC5, 0x53, 0x65, 0x68, 0x52, 0x78, 0x3F
+	largoSecuenciaA		 db	0x18 ; 24 en decimal
+    ; secuenciaBinariaA db 0x53, 0x65, 0x68
+    ; largoSecuenciaA db 3
+    SecuenciaImprimibleCodificada	db	"czjn9zQsT5JJVeWfjvJ1WtPFU2VoUng/", 0
+    TablaConversion		 db	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", 0
+    mensajeExpectativa db "La expectativa es:", 0
+    mensajeResultado db "El resultado actual es:", 0
 
     ; estas son cosas de prueba
     cantidadDeBytes       db  3
@@ -41,7 +46,7 @@ section .data
 	indiceTablaConversion db 0
 
 section .bss
-	secuenciaImprimibleA	  resb	  24
+	secuenciaImprimibleA	  resb	  32
     
     cantidadDeIteraciones     resb    1
     primerByte                resb    1
@@ -59,9 +64,9 @@ section .text
 main:
     ; Conseguimos el numero de iteraciones 24 / 3 = 8
     xor rax, rax ; Vaciamos rax
-    mov ax, [largoSecuenciaA] ; Movemos a ax (1 byte) el largo de secuencia de A
-    div byte[cantidadDeBytes] ; Dividimos ax por la cantidad de bytes = 3
-    mov [cantidadDeIteraciones], ax ; Movemos a cantidadDeIteraciones el valor de ax
+    mov al, [largoSecuenciaA] ; Movemos a al (1 byte) el largo de secuencia de A
+    div byte[cantidadDeBytes] ; Dividimos al por la cantidad de bytes = 3
+    mov [cantidadDeIteraciones], al ; Movemos a cantidadDeIteraciones el valor de al
     xor rax, rax ; Vaciamos rax
 
     ; r15 sera el 'puntero' que usaremos para iterar sobre secuenciaBinariaA
@@ -98,7 +103,12 @@ inicio_de_codificacion:
 
 ; --------------------------- FINALIZACION -------------------------------------
 
+    mov byte[r14], 0 ; Agregamos un 0 al final de la cadena para terminarla
+
+    m_puts mensajeResultado
     m_puts secuenciaImprimibleA
+    m_puts mensajeExpectativa
+    m_puts SecuenciaImprimibleCodificada
 
     ret
 
