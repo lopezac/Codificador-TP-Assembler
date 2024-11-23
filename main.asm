@@ -1,62 +1,28 @@
 ; Nombre y padron de los integrantes del grupo
 ; Axel Carlos Lopez 111713
-; Bautista Capello
-
-; Casos de prueba:
-; SecuenciaBinariaDePrueba db	0x73, 0x38, 0xE7, 0xF7, 0x34, 0x2C, 0x4F, 0x92
-;						   db	0x49, 0x55, 0xE5, 0x9F, 0x8E, 0xF2, 0x75, 0x5A
-;						   db	0xD3, 0xC5, 0x53, 0x65, 0x68, 0x52, 0x78, 0x3F
-; SecuenciaImprimibleCodificada	db	"czjn9zQsT5JJVeWfjvJ1WtPFU2VoUng/"
-;                                   "czjn9zQsT5JJVeWfjvJ1WtPFURx?Ung/"
+; Bautista Capello 111234
 
 global main
 
-; esto es un macro para llamar la funcion puts de C, imprime la cadena pasada como parametro
-; la idea es poder imprimir secuenciaImprimibleA y ver rapidamente que tiene adentro
-extern puts
-%macro m_puts 1
-    mov rdi, %1
-
-    sub rsp, 8
-    call puts
-    add rsp, 8
-%endmacro
-
-    mov rsi, secuenciaBinariaA  ; Cargar la dirección de la secuencia en RSI
-    mov al, [rsi]               ; Cargar el primer byte de la secuencia en AL
-
 section .data
-
-    secuenciaBinariaA    db	0x73, 0x38, 0xE7, 0xF7, 0x34, 0x2C, 0x4F, 0x92
-						 db	0x49, 0x55, 0xE5, 0x9F, 0x8E, 0xF2, 0x75, 0x5A
-						 db	0xD3, 0xC5, 0x53, 0x65, 0x68, 0x52, 0x78, 0x3F
-	largoSecuenciaA		 db	0x18 ; 24 en decimal
-    ; secuenciaBinariaA db 0x53, 0x65, 0x68
-    ; largoSecuenciaA db 3
-    SecuenciaImprimibleCodificada	db	"czjn9zQsT5JJVeWfjvJ1WtPFU2VoUng/", 0
-    TablaConversion		 db	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", 0
-    mensajeExpectativa db "La expectativa es:", 0
-    mensajeResultado db "El resultado actual es:", 0
-
-    ; estas son cosas de prueba
-    cantidadDeBytes       db  3
-	letraZ                db "Z"
-	letraA                db "A"
-    valor252              db 252
+	secuenciaBinariaA	  db 0xC4, 0x94, 0x37, 0x95, 0x63, 0xA2, 0x1D, 0x3C 
+						  db 0x86, 0xFC, 0x22, 0xA9, 0x3D, 0x7C, 0xA4, 0x51 
+						  db 0x63, 0x7C, 0x29, 0x04, 0x93, 0xBB, 0x65, 0x18 
+	largoSecuenciaA		  db 0x18 ; 24d
+    TablaConversion		  db "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", 0
+    cantidadDeBytes       db 3
 	indiceTablaConversion db 0
 
 section .bss
-	secuenciaImprimibleA	  resb	  32
-    
-    cantidadDeIteraciones     resb    1
-    primerByte                resb    1
-    segundoByte               resb    1
-    tercerByte                resb    1
-    primerCaracter            resb    1
-    segundoCaracter           resb    1
-    tercerCaracter            resb    1
-    cuartoCaracter            resb    1
-
+	secuenciaImprimibleA  resb 32
+    cantidadDeIteraciones resb 1
+    primerByte            resb 1
+    segundoByte           resb 1
+    tercerByte            resb 1
+    primerCaracter        resb 1
+    segundoCaracter       resb 1
+    tercerCaracter        resb 1
+    cuartoCaracter        resb 1
 
 section .text
 
@@ -104,11 +70,6 @@ inicio_de_codificacion:
 ; --------------------------- FINALIZACION -------------------------------------
 
     mov byte[r14], 0 ; Agregamos un 0 al final de la cadena para terminarla
-
-    m_puts mensajeResultado
-    m_puts secuenciaImprimibleA
-    m_puts mensajeExpectativa
-    m_puts SecuenciaImprimibleCodificada
 
     ret
 
