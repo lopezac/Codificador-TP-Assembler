@@ -1,180 +1,229 @@
-; Entrada del programa principal
 global main
 
-; Sección de datos inicializados
+;----------------------------------      VARIABLES CON CONTENIDO INICIAL      -----------------------------------
 section .data
-    ; Secuencia binaria que se codificará en Base64
-	secuenciaBinariaA	  db 0xC4, 0x94, 0x37, 0x95, 0x63, 0xA2, 0x1D, 0x3C 
-						  db 0x86, 0xFC, 0x22, 0xA9, 0x3D, 0x7C, 0xA4, 0x51 
-						  db 0x63, 0x7C, 0x29, 0x04, 0x93, 0xBB, 0x65, 0x18 
-	largoSecuenciaA		  db 0x18 ; Longitud de la secuencia binaria
-    TablaConversion		  db "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", 0 ; Tabla Base64
-    cantidadDeBytes       db 3 ; Cada iteración procesa 3 bytes
-	indiceTablaConversion db 0 ; Índice usado para la tabla de conversión
+    ; la secuencia binaria que codificaremos a base64
+    secuenciaBinariaA     db 0xC4, 0x94, 0x37, 0x95, 0x63, 0xA2, 0x1D, 0x3C 
+                          db 0x86, 0xFC, 0x22, 0xA9, 0x3D, 0x7C, 0xA4, 0x51 
+                          db 0x63, 0x7C, 0x29, 0x04, 0x93, 0xBB, 0x65, 0x18 
+    largoSecuenciaA       db 0x18 ; aca ponemos la longitud de la secuencia
+    ; la tabla de conversion de base64, que usaremos a lo largo del programa
+    TablaConversion       db "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", 0
+    cantidadDeBytes       db 3    ; aca decimos que trabajamos con bloques de 3 bytes
 
-; Sección para reservar espacio sin inicializar
+
+;----------------------------------     VARIABLES SIN CONTENIDO INICIAL      ------------------------------------
 section .bss
-	secuenciaImprimibleA  resb 32 ; Espacio para almacenar la secuencia codificada
-    cantidadDeIteraciones resb 1 ; Cantidad de veces que se iterará para procesar la secuencia
-    primerByte            resb 1 ; Almacena el primer byte del trío
-    segundoByte           resb 1 ; Almacena el segundo byte del trío
-    tercerByte            resb 1 ; Almacena el tercer byte del trío
-    primerCaracter        resb 1 ; Primer carácter Base64
-    segundoCaracter       resb 1 ; Segundo carácter Base64
-    tercerCaracter        resb 1 ; Tercer carácter Base64
-    cuartoCaracter        resb 1 ; Cuarto carácter Base64
+    secuenciaImprimibleA  resb 32 ; aca guardamos la secuencia binaria codificada en Base64
+    ; aca guardaremos los bytes de cada bloque de 3 bytes, en cada iteracion
+    primerByte            resb 1
+    segundoByte           resb 1
+    tercerByte            resb 1 
+    ; aca guardaremos los digitos de cada bloque de 3 bytes, en cada iteracion
+    primerDigito          resb 1  
+    segundoDigito         resb 1
+    tercerDigito          resb 1 
+    cuartoDigito          resb 1
 
-; Sección de código ejecutable
+
+;----------------------------------               INSTRUCCIONES              ------------------------------------
 section .text
 
+
+;----------------------------------           INICIO DEL PROGRAMA            ------------------------------------
 main:
-    ; Calcular cuántas iteraciones necesitamos para procesar la secuencia
-    xor rax, rax
-    mov al, [largoSecuenciaA]
-    div byte[cantidadDeBytes] ; Largo / 3
-    mov [cantidadDeIteraciones], al
-    xor rax, rax
+    ; calculamos cuantas iteraciones necesitamos
+    xor rax, rax                  ; limpiamos rax
+    mov al, [largoSecuenciaA]     ; aca movemos la longitud de la secuencia
+    div byte[cantidadDeBytes]     ; aca dividimos por 3 para saber cuantos bloques hay
+    
+    xor rcx, rcx                  ; limpiamos rcx
+    mov cl, al                    ; guardamos en rcx para iterar sobre la cantidad de bloques
+    xor rax, rax                  ; limpiamos rax
 
-    ; Configuración inicial
-    mov rcx, [cantidadDeIteraciones] ; Número de iteraciones
-    xor r15, r15
-    add r15, secuenciaBinariaA ; Apuntar al inicio de la secuencia
-    xor r14, r14
-    add r14, secuenciaImprimibleA ; Apuntar al inicio de la secuencia de salida
+    ; a lo largo del programa, r15 sera el puntero a la secuenciaBinariaA
+    xor r15, r15                  ; limpiamos r15
+    add r15, secuenciaBinariaA    ; apuntamos al inicio de la secuencia binaria
 
+    ; a lo largo del programa, r14 sera el puntero a la secuenciaImprimibleA
+    xor r14, r14                  ; limpiamos r14
+    add r14, secuenciaImprimibleA ; apuntamos al inicio del resultado
+
+    ; a lo largo del programa, r11 sera el puntero a la TablaConversion
+    xor r11, r11
+    add r11, TablaConversion      
+
+
+;----------------------------------        INICIO DE LA CODIFICACION         ------------------------------------
 inicio_de_codificacion:
-    ; Obtener 3 bytes de la secuencia
+    ; procesamos cada bloque de 3 bytes
     sub rsp, 8
-    call obtener_3_bytes
+    call obtener_3_bytes          ; aca leemos cada bloque de 3 bytes, en las variables auxiliares primerByte,
+                                  ; segundoByte y tercerByte
     add rsp, 8
 
-    ; Convertirlos en 4 caracteres Base64
     sub rsp, 8
-    call obtener_4_digitos
+    call obtener_4_digitos        ; aca leemos en las variables auxiliares primerDigito, segundoDigito,
+                                  ; tercerDigito y cuartoDigito, el resultado de dividir cada bloque de 3 bytes
+                                  ; en 4 digitos binarios de 6 bits
     add rsp, 8
 
-    ; Codificar esos caracteres con la tabla Base64
     sub rsp, 8
-    call codificar_4_caracteres
+    call codificar_4_caracteres   ; aca convertimos los digitos en caracteres imprimibles en base64
     add rsp, 8
 
-    ; Resetear los valores de los bytes/caracteres procesados
-    xor byte[primerByte], 0
-    xor byte[segundoByte], 0
-    xor byte[tercerByte], 0
-    xor byte[primerCaracter], 0
-    xor byte[segundoCaracter], 0
-    xor byte[tercerCaracter], 0
-    xor byte[cuartoCaracter], 0
+    ; limpiamos las variables para la proxima iteracion
+    mov byte[primerByte], 0
+    mov byte[segundoByte], 0
+    mov byte[tercerByte], 0
+    mov byte[primerDigito], 0
+    mov byte[segundoDigito], 0
+    mov byte[tercerDigito], 0
+    mov byte[cuartoDigito], 0
 
-    ; Decrementar el contador de iteraciones y repetir
-    loop inicio_de_codificacion
-
-    ; Finalizar la cadena de salida con un 0 (null terminator)
-    mov byte[r14], 0
+    loop inicio_de_codificacion   ; repetimos para cada bloque
+   
+    mov byte[r14], 0              ; agregamos un 0 al final, indicando que termina la secuencia imprimible
 
     ret
 
-; Obtiene los 3 bytes necesarios para una iteración
+
+;----------------------------------             RUTINAS INTERNAS             ------------------------------------
+
+
+;----------------------------------             OBTENER 3 BYTES              ------------------------------------
 obtener_3_bytes:
-    xor r8, r8
-    mov r8b, [r15] ; Primer byte
-    mov [primerByte], r8b
-    inc r15
+    ; aca leemos 3 bytes seguidos de la secuencia binaria
+    xor r8, r8                    ; limpiamos r8
+    mov r8b, [r15]                ; movemos en r8, el byte apuntado por secuenciaBinariaA
+    mov [primerByte], r8b         ; guardamos en la variable auxiliar primerByte, el primer byte del bloque actual
+    inc r15                       ; avanzamos al siguiente byte del bloque actual
 
     xor r8, r8
-    mov r8b, [r15] ; Segundo byte
+    mov r8b, [r15]
     mov [segundoByte], r8b
     inc r15
     
     xor r8, r8
-    mov r8b, [r15] ; Tercer byte
+    mov r8b, [r15]
     mov [tercerByte], r8b
     inc r15
 
+    xor r8, r8                    ; limpiamos r8
+
     ret
 
-; Convierte los 3 bytes en 4 dígitos Base64
+
+;----------------------------------             OBTENER 4 DIGITOS            ------------------------------------
 obtener_4_digitos:
-    ; Calcular el primer carácter
-    xor r9, r9
-    mov r9b, [primerByte]
-    and r9b, 0b11111100 ; Máscara para los primeros 6 bits
-    shr r9b, 2 ; Desplazar esos bits a la derecha
-    mov [primerCaracter], r9b
+    ; primer digito
+    ; 6 bits de la izquierda del primer byte
+    xor r9, r9                    ; limpiamos r15
 
-    ; Calcular el segundo carácter
-    xor r9, r9
-    xor r10, r10
+    mov r9b, [primerByte]         
+    and r9b, 0b11111100           ; aca usamos una mascara para tomar los primeros 6 bits
+    shr r9b, 2                    ; movemos los bits 2 lugares a la derecha
+    
+    mov [primerDigito], r9b
+
+    ; segundo digito
+    ; 2 bits de la derecha del primer byte
+    ; 4 bits de la izquierda del segundo byte
+    xor r9, r9                    ; limpiamos r9
+    xor r10, r10                  ; limpiamos r10
+
     mov r9b, [primerByte]
-    and r9b, 0b00000011 ; Tomar los últimos 2 bits
-    shl r9b, 4 ; Desplazarlos a la izquierda
+    and r9b, 0b00000011           ; aca usamos una mascara para tomar los 2 ultimos bits
+    shl r9b, 4                    ; movemos los bits 4 lugares a la izquierda
+
     mov r10b, [segundoByte]
-    and r10b, 0b11110000 ; Tomar los primeros 4 bits del segundo byte
-    shr r10b, 4 ; Desplazar esos bits
-    or r9b, r10b ; Combinar ambos
-    mov [segundoCaracter], r9b
+    and r10b, 0b11110000          ; aca usamos una mascara para tomar los primeros 4 bits
+    shr r10b, 4                   ; movemos los bits 4 lugares a la derecha
 
-    ; Calcular el tercer carácter
+    or r9b, r10b                  ; combinamos los bits
+    
+    mov [segundoDigito], r9b
+
+    ; tercer digito
+    ; 4 bits de la derecha del segundo byte
+    ; 2 bits de la izquierda del tercer byte
     xor r9, r9
     xor r10, r10
+
     mov r9b, [segundoByte]
-    and r9b, 0b00001111 ; Tomar los últimos 4 bits
-    shl r9b, 2 ; Desplazarlos
+    and r9b, 0b00001111           ; aca usamos una mascara para tomar los ultimos 4 bits
+    shl r9b, 2                    ; movemos los bits 2 lugares a la izquierda
+
     mov r10b, [tercerByte]
-    and r10b, 0b11000000 ; Tomar los primeros 2 bits del tercer byte
-    shr r10b, 6 ; Desplazarlos
-    or r9b, r10b ; Combinar
-    mov [tercerCaracter], r9b
+    and r10b, 0b11000000          ; aca usamos una mascara para tomar los primeros 2 bits
+    shr r10b, 6                   ; movemos los bits 6 lugares a la derecha
 
-    ; Calcular el cuarto carácter
-    xor r9, r9
-    mov r9b, [tercerByte]
-    and r9b, 0b00111111 ; Máscara para los últimos 6 bits
-    mov [cuartoCaracter], r9b
+    or r9b, r10b                  ; combinamos los bits
+    
+    mov [tercerDigito], r9b
 
-    ret
+    ; cuarto digito
+    ; 6 bits de la derecha del tercer byte
+    xor r9, r9                    ; limpiamos r9
+    mov r9b, [tercerByte]         ; aca tomamos los ultimos 6 bits
+    and r9b, 0b00111111
+    mov [cuartoDigito], r9b
 
-; Codifica un solo carácter usando la tabla Base64
-codificar_un_caracter:
-    xor r11, r11
-    add r11, TablaConversion ; Apuntar a la tabla
-
-    xor rax, rax
-    mov al, [r11 + r13] ; Obtener el carácter
-    mov [r14], al ; Guardarlo en la secuencia de salida
-    inc r14 ; Avanzar el puntero
+    xor r9, r9                    ; limpiamos r9
+    xor r10, r10                  ; limpiamos r10
 
     ret
 
-; Codifica los 4 caracteres generados
+
+;----------------------------------          CODIFICAR 4 CARACTERES           -----------------------------------
 codificar_4_caracteres:
-    xor r13, r13
-    mov r13b, [primerCaracter]
+    ; traducimos los 4 digitos a caracteres base64
+    ; primer caracter
+    xor r13, r13                  ; limpiamos r13
+    mov r13b, [primerDigito]    ; movemos a r13 el primerDigito a codificar
 
     sub rsp, 8
-    call codificar_un_caracter
+    call codificar_un_caracter    ; agregamos a secuenciaImprimibleA el primerDigito codificado en base64
     add rsp, 8
 
-    xor r13, r13
-    mov r13b, [segundoCaracter]
+    ; segundo caracter
+    xor r13, r13                  ; limpiamos r13
+    mov r13b, [segundoDigito]   ; movemos a r13 el segundoDigito a codificar
 
     sub rsp, 8
-    call codificar_un_caracter
+    call codificar_un_caracter    ; agregamos a secuenciaImprimibleA el segundoDigito codificado en base64
     add rsp, 8
 
-    xor r13, r13
-    mov r13b, [tercerCaracter]
+    ; tercer caracter
+    xor r13, r13                  ; limpiamos r13
+    mov r13b, [tercerDigito]    ; movemos a r13 el tercerDigito a codificar
 
     sub rsp, 8
-    call codificar_un_caracter
+    call codificar_un_caracter    ; agregamos a secuenciaImprimibleA el tercerDigito codificado en base64
     add rsp, 8
 
-    xor r13, r13
-    mov r13b, [cuartoCaracter]
+    ; cuarto caracter
+    xor r13, r13                  ; limpiamos r13
+    mov r13b, [cuartoDigito]    ; movemos a r13 el cuartoDigito a codificar
 
     sub rsp, 8
-    call codificar_un_caracter
+    call codificar_un_caracter    ; agregamos a secuenciaImprimibleA el cuartoDigito codificado en base64
     add rsp, 8
+
+    xor r13, r13                  ; limpiamos r13
+    xor rax, rax                  ; limpiamos rax
+
+    ret
+
+
+;----------------------------------          CODIFICAR UN CARACTER           ------------------------------------
+codificar_un_caracter:
+    ; buscamos el caracter correspondiente en la tabla de conversion
+    xor rax, rax                  ; limpiamos rax
+    
+    mov al, [r11 + r13]           ; guardamos en el registro al, el caracter correspondiente en la TablaConversion al
+                                  ; digito almacenado en r13
+    mov [r14], al                 ; guardamos el digito codificado en la secuenciaImprimibleA
+    inc r14                       ; avanzamos al siguiente caracter de la secuenciaImprimibleA
 
     ret
